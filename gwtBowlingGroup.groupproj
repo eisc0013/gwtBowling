@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{458E275E-1990-405D-AF67-531A45FE8E6F}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="gwtBowling.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Tests\gwtBowlingTests.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="gwtBowling">
+        <MSBuild Projects="gwtBowling.dproj"/>
+    </Target>
+    <Target Name="gwtBowling:Clean">
+        <MSBuild Projects="gwtBowling.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="gwtBowling:Make">
+        <MSBuild Projects="gwtBowling.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="gwtBowlingTests">
+        <MSBuild Projects="Tests\gwtBowlingTests.dproj"/>
+    </Target>
+    <Target Name="gwtBowlingTests:Clean">
+        <MSBuild Projects="Tests\gwtBowlingTests.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="gwtBowlingTests:Make">
+        <MSBuild Projects="Tests\gwtBowlingTests.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="gwtBowling;gwtBowlingTests"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="gwtBowling:Clean;gwtBowlingTests:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="gwtBowling:Make;gwtBowlingTests:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
