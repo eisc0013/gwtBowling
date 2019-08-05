@@ -19,6 +19,14 @@ type
     procedure BowlingGameInstantiate;
     [Test]
     procedure BowlingGameInitialState;
+    [Test]
+    [TestCase('Five', '5,5')]
+    [TestCase('GutterBall', '0,0')]
+    [TestCase('Strike', '10,10')]
+    procedure BowlingGameRollFirst(const APinsDown: Integer; const OResult: Integer);
+    [Test]
+    [TestCase('Spare', '5,5,10')]
+    procedure BowlingGameRollTwo(const APinsDown1: Integer; const APinsDown2: Integer; const OResult: Integer);
     // Sample Methods
     // Simple single Test
     [Test]
@@ -34,12 +42,27 @@ implementation
 
 procedure TTestGame.BowlingGameInitialState;
 begin
-  Assert.AreEqual(-1, GameBowling.TotalScore);
+  Assert.AreEqual(0, GameBowling.TotalScore);
 end;
 
 procedure TTestGame.BowlingGameInstantiate;
 begin
   Assert.IsNotNull(GameBowling);
+end;
+
+procedure TTestGame.BowlingGameRollFirst(const APinsDown: Integer; const OResult: Integer);
+begin
+  GameBowling.Roll(APinsDown);
+  Assert.AreEqual(OResult, GameBowling.TotalScore);
+end;
+
+procedure TTestGame.BowlingGameRollTwo(const APinsDown1, APinsDown2,
+  OResult: Integer);
+begin
+  GameBowling.Roll(APinsDown1);
+  GameBowling.Roll(APinsDown2);
+  //GameBowling.Roll;
+  Assert.AreEqual(OResult, GameBowling.TotalScore);
 end;
 
 procedure TTestGame.Setup;
