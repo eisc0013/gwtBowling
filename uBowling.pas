@@ -48,6 +48,8 @@ type
     function GetTotalScore: Integer;
     function GetTotalRolls: Integer;
     function GetGameOver: Boolean;
+    function GetFramePinsDown: Integer; Overload;
+    function GetFramePinsDown(const AFrame: Integer): Integer; Overload;
   public
     constructor Create;
     function Start: Boolean;
@@ -72,6 +74,24 @@ end;
 function TGame.GetCurrentFrame: Integer;
 begin
   result := FFrame;
+end;
+
+function TGame.GetFramePinsDown(const AFrame: Integer): Integer;
+var
+  lI: Integer;
+  lPinsDown: Integer;
+begin
+  lPinsDown := 0;
+  for lI := FFrames[AFrame].rolls downto 1 do
+  begin
+    Inc(lPinsDown, FFrames[AFrame].roll[lI]);
+  end;
+  result := lPinsDown;
+end;
+
+function TGame.GetFramePinsDown: Integer;
+begin
+  result := GetFramePinsDown(FFrame);
 end;
 
 function TGame.GetGameOver: Boolean;
@@ -141,6 +161,7 @@ end;
 function TGame.Roll(APinsDown: Integer): Integer;
 var
   lRolls: Integer;
+  lI: Integer;
 begin
   if NOT FGameOver then
   begin
@@ -180,6 +201,28 @@ begin
       end;
 
     // ALE 20190805 calculate score, use look-back to previous frames if needed
+    FScore := 0; // ALE 20190806 indeterminate score
+    for lI := FFrame downto 1 do
+    begin
+      if FFrame < FRAMES_TOTAL then
+      begin
+        if GetFramePinsDown = 10  then
+        begin
+          FScore := -1; // ALE 20190806 Strike or Spare
+          break;
+        end;
+      end
+      else
+      begin
+        // ALE 20190806 10th frame needs some finesse
+        if (FFrames[FFrame].rolls < 3) AND (GetFramePinsDown >= 10) then
+        begin
+          FScore := -1; // ALE 20190806 Strike or Spare
+          break;
+        end;
+      end;
+    end;
+
 
     result := APinsDown;
     { TODO -oUser -cShould only be able to roll as many pins as are still standing }
