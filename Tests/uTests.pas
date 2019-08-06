@@ -27,6 +27,9 @@ type
     [Test]
     [TestCase('Spare', '5,5,10')]
     procedure BowlingGameRollTwo(const APinsDown1: Integer; const APinsDown2: Integer; const OResult: Integer);
+    [Test]
+    [TestCase('Five', '5,5')]
+    procedure BowlingGameRollCount(const ARolls: Integer; const OResult: Integer);
     // Sample Methods
     // Simple single Test
     [Test]
@@ -48,6 +51,17 @@ end;
 procedure TTestGame.BowlingGameInstantiate;
 begin
   Assert.IsNotNull(GameBowling);
+end;
+
+procedure TTestGame.BowlingGameRollCount(const ARolls, OResult: Integer);
+var
+  I: Integer;
+begin
+  for I := 1 to ARolls do
+  begin
+    GameBowling.Roll;
+  end;
+  Assert.AreEqual(OResult, GameBowling.TotalRolls);
 end;
 
 procedure TTestGame.BowlingGameRollFirst(const APinsDown: Integer; const OResult: Integer);

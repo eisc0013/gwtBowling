@@ -12,13 +12,17 @@ type
     function Roll(APinsDown: Integer): Integer; Overload;
     function ScoreByFrame: Boolean;
     function GetTotalScore: Integer;
+    function GetTotalRolls: Integer;
     property TotalScore: Integer read GetTotalScore;
+    property TotalRolls: Integer read GetTotalRolls;
   end;
 
   TGame =  class(TInterfacedObject, IGame)
   private
     FScore: Integer;
+    FRolls: Integer; // ALE 20190805 Counting rolls for fun
     function GetTotalScore: Integer;
+    function GetTotalRolls: Integer;
   public
     constructor Create;
     function Start: Boolean;
@@ -33,7 +37,14 @@ implementation
 constructor TGame.Create;
 begin
   Randomize; // ALE 20190805 Set up random number generator
-  FScore := 0;
+  FScore := -1;
+  FRolls := -1;
+  Start; // ALE 20190805 Do we really want to do this or just initialize in Create?
+end;
+
+function TGame.GetTotalRolls: Integer;
+begin
+  result := FRolls;
 end;
 
 function TGame.GetTotalScore: Integer;
@@ -49,6 +60,7 @@ end;
 function TGame.Roll(APinsDown: Integer): Integer;
 begin
   Inc(FScore, APinsDown);
+  Inc(FRolls);
   result := FScore;
 end;
 
@@ -59,7 +71,9 @@ end;
 
 function TGame.Start: Boolean;
 begin
-  result := False;
+  FScore := 0;
+  FRolls := 0;
+  result := True;
 end;
 
 end.
