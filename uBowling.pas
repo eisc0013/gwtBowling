@@ -24,8 +24,8 @@ type
   IGame = interface
     ['{A1E0B9A0-061A-40FF-8E57-0AD401FCAF8E}']
     function Start: Boolean;
-    function roll: Integer; Overload;
-    function roll(APinsDown: Integer): Integer; Overload;
+    function Roll: Integer; Overload;
+    function Roll(APinsDown: Integer): Integer; Overload;
     function ScoreByFrame: TGameOfFrames;
     function GetTotalScore: Integer;
     function GetTotalRolls: Integer;
@@ -51,8 +51,8 @@ type
   public
     constructor Create;
     function Start: Boolean;
-    function roll: Integer; Overload;
-    function roll(APinsDown: Integer): Integer; Overload;
+    function Roll: Integer; Overload;
+    function Roll(APinsDown: Integer): Integer; Overload;
     function ScoreByFrame: TGameOfFrames;
   end;
 
@@ -89,7 +89,7 @@ begin
   result := FScore;
 end;
 
-function TGame.roll: Integer;
+function TGame.Roll: Integer;
 begin
   result := -1;
   if (FFrame < FRAMES_TOTAL) then
@@ -138,7 +138,7 @@ begin
   end;
 end;
 
-function TGame.roll(APinsDown: Integer): Integer;
+function TGame.Roll(APinsDown: Integer): Integer;
 var
   lRolls: Integer;
 begin
