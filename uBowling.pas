@@ -91,6 +91,7 @@ end;
 
 function TGame.roll: Integer;
 begin
+  result := -1;
   if (FFrame < FRAMES_TOTAL) then
   begin
     if FFrames[FFrame].rolls = 0 then
@@ -104,10 +105,37 @@ begin
   end
   else
   begin
-    { TODO -oUser -cShould only be able to roll as many pins as are still standing }
-    result := roll(Random(11));
+    if FFrames[FFrame].rolls = 0 then
+    begin
+      result := roll(Random(11));
+    end
+    else if FFrames[FFrame].rolls = 1 then
+    begin
+      if FFrames[FFrame].roll[1] = 10 then
+      begin
+        result := roll(Random(11));
+      end
+      else
+      begin
+        result := roll(Random(11 - FFrames[FFrame].roll[1]));
+      end;
+    end
+    else if FFrames[FFrame].rolls = 2 then
+    begin
+      if FFrames[FFrame].roll[2] = 10 then
+      begin
+        result := roll(Random(11));
+      end
+      else
+      begin
+        result := roll(Random(11 - FFrames[FFrame].roll[2]));
+      end;
+    end;
   end;
-
+  if result = -1 then
+  begin
+    raise Exception.Create('Roll: Bowling alley is broken');
+  end;
 end;
 
 function TGame.roll(APinsDown: Integer): Integer;
