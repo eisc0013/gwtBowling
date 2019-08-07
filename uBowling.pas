@@ -172,34 +172,6 @@ begin
 
     FFrames[FFrame].roll[Rolls] := APinsDown;
 
-    // ALE 20190805 10th frame crazy logic
-    if (FFrame = FRAMES_TOTAL) then
-    begin
-      if Rolls = 2 then
-      begin
-        if FFrames[FFrame].roll[1] + FFrames[FFrame].roll[1] < 10 then
-        begin
-          FGameOver := True;
-        end;
-      end
-      else if Rolls = 3 then
-      begin
-        FGameOver := True;
-      end;
-    end
-    else
-      // ALE 20190805 frame incrementing pre-10th frame
-      if ((FFrames[FFrame].roll[1] = 10) AND (FFrame < FRAMES_TOTAL)) then
-      begin
-        // ALE 20190805 got a strike, move us to next frame for all but 10th frame
-        Inc(FFrame);
-      end
-      else if ((FFrames[FFrame].rolls = 2) AND (FFrame < FRAMES_TOTAL)) then
-      begin
-        // ALE 20190805 rolled two balls, move us to next frame for all but 10th frame
-        Inc(FFrame);
-      end;
-
     // ALE 20190805 calculate score, use look-back to previous frames if needed
     FScore := 0; // ALE 20190806 indeterminate score
     for I := FFrame downto 1 do
@@ -223,6 +195,35 @@ begin
       end;
     end;
 
+    // ALE 20190805 10th frame crazy logic
+    if (FFrame = FRAMES_TOTAL) then
+    begin
+      if Rolls = 2 then
+      begin
+        if FFrames[FFrame].roll[1] + FFrames[FFrame].roll[1] < 10 then
+        begin
+          FGameOver := True;
+        end;
+      end
+      else if Rolls = 3 then
+      begin
+        FGameOver := True;
+      end;
+    end
+    else
+    begin
+      // ALE 20190805 frame incrementing pre-10th frame
+      if ((FFrames[FFrame].roll[1] = 10) AND (FFrame < FRAMES_TOTAL)) then
+      begin
+        // ALE 20190805 got a strike, move us to next frame for all but 10th frame
+        Inc(FFrame);
+      end
+      else if ((FFrames[FFrame].rolls = 2) AND (FFrame < FRAMES_TOTAL)) then
+      begin
+        // ALE 20190805 rolled two balls, move us to next frame for all but 10th frame
+        Inc(FFrame);
+      end;
+    end;
 
     result := APinsDown;
     { TODO -oUser -cShould only be able to roll as many pins as are still standing }
