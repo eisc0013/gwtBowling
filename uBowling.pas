@@ -78,15 +78,15 @@ end;
 
 function TGame.GetFramePinsDown(const AFrame: Integer): Integer;
 var
-  lI: Integer;
-  lPinsDown: Integer;
+  I: Integer;
+  PinsDown: Integer;
 begin
-  lPinsDown := 0;
-  for lI := FFrames[AFrame].rolls downto 1 do
+  PinsDown := 0;
+  for I := FFrames[AFrame].rolls downto 1 do
   begin
-    Inc(lPinsDown, FFrames[AFrame].roll[lI]);
+    Inc(PinsDown, FFrames[AFrame].roll[I]);
   end;
-  result := lPinsDown;
+  result := PinsDown;
 end;
 
 function TGame.GetFramePinsDown: Integer;
@@ -160,29 +160,29 @@ end;
 
 function TGame.Roll(APinsDown: Integer): Integer;
 var
-  lRolls: Integer;
-  lI: Integer;
+  Rolls: Integer;
+  I: Integer;
 begin
   if NOT FGameOver then
   begin
     Inc(FScore, APinsDown);
     Inc(FRolls);
     Inc(FFrames[FFrame].rolls);
-    lRolls := FFrames[FFrame].rolls;
+    Rolls := FFrames[FFrame].rolls;
 
-    FFrames[FFrame].roll[lRolls] := APinsDown;
+    FFrames[FFrame].roll[Rolls] := APinsDown;
 
     // ALE 20190805 10th frame crazy logic
     if (FFrame = FRAMES_TOTAL) then
     begin
-      if lRolls = 2 then
+      if Rolls = 2 then
       begin
         if FFrames[FFrame].roll[1] + FFrames[FFrame].roll[1] < 10 then
         begin
           FGameOver := True;
         end;
       end
-      else if lRolls = 3 then
+      else if Rolls = 3 then
       begin
         FGameOver := True;
       end;
@@ -202,7 +202,7 @@ begin
 
     // ALE 20190805 calculate score, use look-back to previous frames if needed
     FScore := 0; // ALE 20190806 indeterminate score
-    for lI := FFrame downto 1 do
+    for I := FFrame downto 1 do
     begin
       if FFrame < FRAMES_TOTAL then
       begin
