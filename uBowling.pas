@@ -52,6 +52,8 @@ type
     function GetFramePinsDown(const AFrame: Integer): Integer; Overload;
     function GetFrameStrikes(const AFrame: Integer): Integer;
     function GetFrameSpare(const AFrame: Integer): Boolean;
+    procedure IsTooManyPins(APinsDown: Integer);
+    function GetLookForwardRolls(const I: Integer): Integer;
   public
     constructor Create;
     function Start: Boolean;
@@ -239,36 +241,8 @@ begin
     Rolls := FFrames[FFrame].rolls;
     FFrames[FFrame].roll[Rolls] := APinsDown;
 
-    // Check for too many pins downed in frame
-    if (APinsDown > 10) then
-    begin
-      raise Exception.Create('There are not that many pins man');
-    end
-    else if (FFrame < FRAMES_TOTAL) then
-    begin
-      if ((FFrames[FFrame].rolls = 2)
-       AND (FFrames[FFrame].roll[1] + FFrames[FFrame].roll[2] > 10)) then
-      begin
-        raise Exception.Create('There are not that many pins man');
-      end;
-    end
-    else
-    begin
-      // ALE 20190807 10th frame
-      if ((FFrames[FFrame].rolls >= 2) AND (FFrames[FFrame].roll[1] < 10)
-       AND (FFrames[FFrame].roll[1] + FFrames[FFrame].roll[2] > 10)) then
-      begin
-        // ALE 20190807 may have a spare by 1st and 2nd roles
-        raise Exception.Create('There are not that many pins man');
-      end
-      else if ((FFrames[FFrame].rolls = 3) AND (FFrames[FFrame].roll[1] = 10)
-       AND (FFrames[FFrame].roll[2] <10)
-       AND (FFrames[FFrame].roll[2] + FFrames[FFrame].roll[3] > 10)) then
-      begin
-        // ALE 20190807 first roll strike, second roll not strike
-        raise Exception.Create('There are not that many pins man');
-      end;
-    end;
+    // ALE 20190808 error out if too many pins were knocked down
+    IsTooManyPins(APinsDown);
 
     // ALE 20190805 calculate score, use look-back to previous frames if needed
     FScore := 0; // ALE 20190806 indeterminate score
@@ -286,26 +260,7 @@ begin
     begin
       for I := FFrame downto 1 do
       begin
-        // ALE 20190807 look-back logic is nonsensical, we look forward
-        if (I = FFrame) then
-        begin
-          MaxLookForwardRolls := 0;
-        end
-        else if (I = FFrame - 1) then
-        begin
-          if (FFrames[I+1].rolls = 1) then
-          begin
-            MaxLookForwardRolls := 1;
-          end
-          else
-          begin
-            MaxLookForwardRolls := 2;
-          end;
-        end
-        else
-        begin
-          MaxLookForwardRolls := 2;
-        end;
+        MaxLookForwardRolls := GetLookForwardRolls(I);
 
 
         // ALE 20190807 get to actually scoring
@@ -483,6 +438,63 @@ end;
 function TGame.ScoreByFrame: TGameOfFrames;
 begin
   result := FFrames;
+end;
+
+function TGame.GetLookForwardRolls(const I: Integer): Integer;
+var
+  MaxLookForwardRolls: Integer;
+begin
+  // ALE 20190807 look-back logic is nonsensical, we look forward
+  if (I = FFrame) then
+  begin
+    MaxLookForwardRolls := 0;
+  end
+  else if (I = FFrame - 1) then
+  begin
+    if (FFrames[I + 1].rolls = 1) then
+    begin
+      MaxLookForwardRolls := 1;
+    end
+    else
+    begin
+      MaxLookForwardRolls := 2;
+    end;
+  end
+  else
+  begin
+    MaxLookForwardRolls := 2;
+  end;
+  result := MaxLookForwardRolls;
+end;
+
+procedure TGame.IsTooManyPins(APinsDown: Integer);
+begin
+  // Check for too many pins downed in frame
+  if (APinsDown > 10) then
+  begin
+    raise Exception.Create('There are not that many pins man');
+  end
+  else if (FFrame < FRAMES_TOTAL) then
+  begin
+    if ((FFrames[FFrame].rolls = 2) and (FFrames[FFrame].roll[1] + FFrames[FFrame].roll[2] > 10)) then
+    begin
+      raise Exception.Create('There are not that many pins man');
+    end;
+  end
+  else
+  begin
+    // ALE 20190807 10th frame
+    if ((FFrames[FFrame].rolls >= 2) and (FFrames[FFrame].roll[1] < 10) and (FFrames[FFrame].roll[1] + FFrames[FFrame].roll[2] > 10)) then
+    begin
+      // ALE 20190807 may have a spare by 1st and 2nd roles
+      raise Exception.Create('There are not that many pins man');
+    end
+    else if ((FFrames[FFrame].rolls = 3) and (FFrames[FFrame].roll[1] = 10) and (FFrames[FFrame].roll[2] < 10) and (FFrames[FFrame].roll[2] + FFrames[FFrame].roll[3] > 10)) then
+    begin
+      // ALE 20190807 first roll strike, second roll not strike
+      raise Exception.Create('There are not that many pins man');
+    end;
+  end;
 end;
 
 function TGame.Start: Boolean;
