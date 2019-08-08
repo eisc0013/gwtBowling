@@ -375,7 +375,7 @@ begin
             begin
               if (GetFrameSpare(I) = False) then
               begin
-                Inc(FFrames[I].score, APinsDown);
+                Inc(FFrames[I].score, FFrames[I].roll[1] + APinsDown);
               end
               else
               begin
@@ -448,7 +448,7 @@ begin
     begin
       if Rolls = 2 then
       begin
-        if FFrames[FFrame].roll[1] + FFrames[FFrame].roll[1] < 10 then
+        if FFrames[FFrame].roll[1] + FFrames[FFrame].roll[2] < 10 then
         begin
           FGameOver := True;
         end;
