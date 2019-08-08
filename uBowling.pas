@@ -114,7 +114,6 @@ end;
 function TGame.GetFrameSpare(const AFrame: Integer): Boolean;
 var
   Spare: Boolean;
-  I: Integer;
 begin
   Spare := False;
   if (AFrame < FRAMES_TOTAL) then
@@ -231,7 +230,7 @@ var
   I: Integer;
   MaxLookForwardRolls: Integer;
 begin
-  if NOT FGameOver then
+  if (NOT FGameOver) AND (APinsDown <> -1) then
   begin
     //Inc(FScore, APinsDown);
     Inc(FRolls);
@@ -372,13 +371,13 @@ begin
       end;
     end;
 
-    result := APinsDown;
     { TODO -oUser -cShould only be able to roll as many pins as are still standing }
   end
-  else
+  else if (FGameOver = True) then
   begin
     raise Exception.Create('Game is already over man');
   end;
+  result := APinsDown;
 end;
 
 function TGame.ScoreByFrame: TGameOfFrames;
