@@ -7,6 +7,7 @@ interface
   procedure BowlingResultsPrint(AGameBowling: IGame);
   procedure BowlingAuto(AGameBowling: IGame);
   procedure BowlingManual(AGameBowling: IGame);
+  function FormatScore(const AScore: Integer): String;
 
 implementation
 
@@ -34,9 +35,9 @@ begin
   for var I := 1 to 10 do
   begin
     WriteLn('Frame: ' + AGameBowling.ScoreByFrame[I].number.ToString +
-      ' Rolls: ' + AGameBowling.ScoreByFrame[I].rolls.ToString + ' Score: ' +
-      AGameBowling.ScoreByFrame[I].points.ToString + ' Points: ' +
-      AGameBowling.ScoreByFrame[I].score.ToString);
+      ' Rolls: ' + AGameBowling.ScoreByFrame[I].rolls.ToString + ' Points: ' +
+      FormatScore(AGameBowling.ScoreByFrame[I].points) + ' Score: ' +
+      FormatScore(AGameBowling.ScoreByFrame[I].score));
     for var J := 1 to AGameBowling.ScoreByFrame[I].rolls do
     begin
       WriteLn('  Roll ' + J.ToString + ' Pins Downed: ' +
@@ -69,9 +70,20 @@ begin
     if (TryStrToInt(PinsInput, Pins) = True) then
     begin
       AGameBowling.Roll(Pins);
-      WriteLn('Current Frame: ' + AGameBowling.CurrentFrame.ToString + ' Total Score: ' + AGameBowling.TotalScore.ToString);
+      WriteLn('Current Frame: ' + AGameBowling.CurrentFrame.ToString + ' Total Score: ' + FormatScore(AGameBowling.TotalScore));
     end;
   end;
 end;
 
+function FormatScore(const AScore: Integer): String;
+begin
+  if (AScore = -1) then
+  begin
+    result := 'Indeterminate';
+  end
+  else
+  begin
+    result := AScore.ToString;
+  end;
+end;
 end.
