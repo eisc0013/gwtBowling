@@ -22,16 +22,19 @@ type
     [Test]
     [TestCase('Five', '5,5')]
     [TestCase('GutterBall', '0,0')]
-    [TestCase('Strike', '10,10')]
+    [TestCase('Strike', '10,-1')]
     procedure BowlingGameRollFirst(const APinsDown: Integer; const OResult: Integer);
     [Test]
-    [TestCase('Spare', '5,5,10')]
+    [TestCase('Spare', '5,5,-1')]
     procedure BowlingGameRollTwo(const APinsDown1: Integer; const APinsDown2: Integer; const OResult: Integer);
     [Test]
     [TestCase('Five', '5,5')]
     procedure BowlingGameRollCount(const ARolls: Integer; const OResult: Integer);
     [Test]
     [TestCase('OneFrame', '5,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,5')]
+    [TestCase('TwoFrames', '6,4,3,1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,17')]
+    [TestCase('SixFrames', '6,4,3,1,10,-1,10,-1,10,-1,5,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,92')]
+    [TestCase('SixFramesAlternate', '6,4,3,1,10,10,10,5,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,92')]
     procedure BowlingGameRollAll(const APinsDown1, APinsDown2, APinsDown3,
      APinsDown4, APinsDown5, APinsDown6, APinsDown7, APinsDown8, APinsDown9,
      APinsDown10, APinsDown11, APinsDown12, APinsDown13, APinsDown14, APinsDown15,
