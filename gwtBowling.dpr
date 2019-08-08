@@ -5,10 +5,12 @@ program gwtBowling;
 
 uses
   System.SysUtils,
-  uBowling in 'uBowling.pas';
+  uBowling in 'uBowling.pas',
+  uExampleHelpers in 'uExampleHelpers.pas';
 
 var
   GameBowling: IGame;
+  MenuChoice: Integer;
 
 begin
   try
@@ -18,25 +20,24 @@ begin
       WriteLn(E.ClassName, ': Could not create GameBowling', E.Message);
   end;
 
-    // ALE 20190805 throw some balls
-    while NOT GameBowling.GameOver do
+  MenuChoice := Menu;
+  while (MenuChoice <> 3) do
+  begin
+    GameBowling.Start;
+    case MenuChoice of
+    1:
     begin
-      GameBowling.Roll;
+    BowlingAuto(GameBowling);
+    BowlingResultsPrint(GameBowling);
+    end;
+    2:
+    begin
+    BowlingManual(GameBowling);
+    BowlingResultsPrint(GameBowling);
+    end;
     end;
 
-    // ALE 20190805 show some results
-    WriteLn('Score: ' + GameBowling.TotalScore.ToString + ' Rolls: ' +
-      GameBowling.TotalRolls.ToString);
-    for var I := 1 to 10 do
-    begin
-      WriteLn('Frame: ' + GameBowling.ScoreByFrame[I].number.ToString +
-        ' Rolls: ' + GameBowling.ScoreByFrame[I].rolls.ToString + ' Score: ' +
-        GameBowling.ScoreByFrame[I].score.ToString);
-      for var J := 1 to GameBowling.ScoreByFrame[I].rolls do
-      begin
-        WriteLn('  Roll ' + J.ToString + ' Pins Downed: ' +
-          GameBowling.ScoreByFrame[I].Roll[J].ToString);
-      end;
 
-    end;
+    MenuChoice := Menu;
+  end;
 end.

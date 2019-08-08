@@ -153,6 +153,7 @@
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
         <DCCReference Include="uBowling.pas"/>
+        <DCCReference Include="uExampleHelpers.pas"/>
         <None Include="README.MD"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
