@@ -46,14 +46,21 @@ type
      APinsDown16, APinsDown17, APinsDown18, APinsDown19, APinsDown20, APinsDown21
      : Integer; const OResult: Integer);
     [Test]
-    [TestCase('TooManyPins', '20')]
-    procedure BowlingGameTooManyPins(const APinsDown: Integer);
+    procedure BowlingGamePerfect;
+
+    { ALE 20190807 Now all of the tests for exception generation }
+    [Test]
+    procedure BowlingGameTooManyPinsOneRoll;
+    [Test]
+    procedure BowlingGameTooManyPinsTwoRolls;
+    [Test]
+    procedure BowlingGameTooManyPinsTenthFrame1;
+    [Test]
+    procedure BowlingGameTooManyPinsTenthFrame2;
     [Test]
     procedure BowlingGameTooManyRolls;
     [Test]
     procedure BowlingGameRandomRollException;
-    [Test]
-    procedure BowlingGamePerfect;
   end;
 
 implementation
@@ -148,10 +155,44 @@ begin
   Assert.AreEqual(OResult, GameBowling.TotalScore);
 end;
 
-procedure TTestGame.BowlingGameTooManyPins(const APinsDown: Integer);
+procedure TTestGame.BowlingGameTooManyPinsOneRoll;
 begin
   Assert.WillRaiseWithMessage(
-   procedure begin GameBowling.Roll(APinsDown); end, Exception, 'Max of 10 pins man');
+   procedure begin GameBowling.Roll(11); end, Exception, 'There are not that many pins man');
+end;
+
+procedure TTestGame.BowlingGameTooManyPinsTenthFrame1;
+var
+  I: Integer;
+begin
+  for I := 1 to 10 do
+  begin
+    GameBowling.Roll(10);
+  end;
+  // ALE 20190807 bad things should happen on 13th roll
+  Assert.WillRaiseWithMessage(
+   procedure begin GameBowling.Roll(11); end, Exception, 'There are not that many pins man');
+end;
+
+procedure TTestGame.BowlingGameTooManyPinsTenthFrame2;
+var
+  I: Integer;
+begin
+  for I := 1 to 10 do
+  begin
+    GameBowling.Roll(10);
+  end;
+  GameBowling.Roll(7);
+  // ALE 20190807 bad things should happen on 13th roll
+  Assert.WillRaiseWithMessage(
+   procedure begin GameBowling.Roll(6); end, Exception, 'There are not that many pins man');
+end;
+
+procedure TTestGame.BowlingGameTooManyPinsTwoRolls;
+begin
+  GameBowling.Roll(5);
+  Assert.WillRaiseWithMessage(
+   procedure begin GameBowling.Roll(7); end, Exception, 'There are not that many pins man');
 end;
 
 procedure TTestGame.BowlingGameTooManyRolls;

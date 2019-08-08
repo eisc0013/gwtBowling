@@ -231,19 +231,44 @@ var
   MaxLookForwardRolls: Integer;
   FrameStrikes: Integer;
 begin
-  if (APinsDown > 10) then
-  begin
-    raise Exception.Create('Max of 10 pins man');
-  end;
-
   if (NOT FGameOver) AND (APinsDown <> -1) then
   begin
     //Inc(FScore, APinsDown);
     Inc(FRolls);
     Inc(FFrames[FFrame].rolls);
     Rolls := FFrames[FFrame].rolls;
-
     FFrames[FFrame].roll[Rolls] := APinsDown;
+
+    // Check for too many pins downed in frame
+    if (APinsDown > 10) then
+    begin
+      raise Exception.Create('There are not that many pins man');
+    end
+    else if (FFrame < FRAMES_TOTAL) then
+    begin
+      if ((FFrames[FFrame].rolls = 2)
+       AND (FFrames[FFrame].roll[1] + FFrames[FFrame].roll[2] > 10)) then
+      begin
+        raise Exception.Create('There are not that many pins man');
+      end;
+    end
+    else
+    begin
+      // ALE 20190807 10th frame
+      if ((FFrames[FFrame].rolls >= 2) AND (FFrames[FFrame].roll[1] < 10)
+       AND (FFrames[FFrame].roll[1] + FFrames[FFrame].roll[2] > 10)) then
+      begin
+        // ALE 20190807 may have a spare by 1st and 2nd roles
+        raise Exception.Create('There are not that many pins man');
+      end
+      else if ((FFrames[FFrame].rolls = 3) AND (FFrames[FFrame].roll[1] = 10)
+       AND (FFrames[FFrame].roll[2] <10)
+       AND (FFrames[FFrame].roll[2] + FFrames[FFrame].roll[3] > 10)) then
+      begin
+        // ALE 20190807 first roll strike, second roll not strike
+        raise Exception.Create('There are not that many pins man');
+      end;
+    end;
 
     // ALE 20190805 calculate score, use look-back to previous frames if needed
     FScore := 0; // ALE 20190806 indeterminate score
@@ -399,11 +424,12 @@ begin
               Inc(FFrames[I].score, 10 + APinsDown)
             end;
           end;
+          { ALE 20190807 should be dead code
           if (FFrames[FFrame].rolls < 3) AND (GetFramePinsDown >= 10) then
           begin
             FScore := -1; // ALE 20190806 Strike or Spare
             break;
-          end;
+          end; }
         end;
       end;
     end;

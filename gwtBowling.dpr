@@ -12,8 +12,11 @@ var
 
 begin
   try
-    { TODO -oUser -cConsole Main : Insert code here }
     GameBowling := TGame.Create;
+  except
+    on E: Exception do
+      WriteLn(E.ClassName, ': Could not create GameBowling', E.Message);
+  end;
 
     // ALE 20190805 throw some balls
     while NOT GameBowling.GameOver do
@@ -36,19 +39,4 @@ begin
       end;
 
     end;
-
-    {
-      for var I := 0 to 22 do
-      begin
-      WriteLn(IntToStr(GameBowling.Roll) + ' ' + IntToStr(GameBowling.ScoreByFrame[GameBowling.CurrentFrame].rolls)
-      + ' ' + IntToStr(GameBowling.ScoreByFrame[GameBowling.CurrentFrame].number)
-      + ' ' + IntToStr(GameBowling.TotalScore)
-      + ' ' + IntToStr(GameBowling.TotalRolls));
-      end;
-    }
-  except
-    on E: Exception do
-      WriteLn(E.ClassName, ': Could not create GameBowling', E.Message);
-  end;
-
 end.
