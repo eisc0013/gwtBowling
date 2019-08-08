@@ -229,7 +229,7 @@ function TGame.Roll(APinsDown: Integer): Integer;
 var
   Rolls: Integer;
   I: Integer;
-  MaxLookbackFrames: Integer;
+  MaxLookForwardRolls: Integer;
 begin
   if NOT FGameOver then
   begin
@@ -246,36 +246,79 @@ begin
     begin
       FScore := -1; // ALE 20190806 Strike or Spare
     end
-    else if (FFrame < FRAMES_TOTAL)
-     AND (FFrames[FFrame].rolls < 3)
+    else if (FFrame = FRAMES_TOTAL)
+     AND (FFrames[FFrame].rolls < ROLLS_PER_FRAME_MAX)
      AND (GetFramePinsDown >= 10) then
     begin
-      FScore := -1; // ALE 20190806 Strike or Spare
+      FScore := -1; // ALE 20190806 Strike or Spare with one roll to go
     end
     else
     begin
       for I := FFrame downto 1 do
       begin
-        if I > 2 then
+        // ALE 20190807 look-back logic is nonsensical, we look forward
+        if (I = FFrame) then
         begin
-          MaxLookbackFrames := 2;
+          MaxLookForwardRolls := 0;
         end
-        else if I > 1 then
+        else if (I = FFrame - 1) then
         begin
-          MaxLookbackFrames := 1;
+          if (FFrames[I+1].rolls = 1) then
+          begin
+            MaxLookForwardRolls := 1;
+          end
+          else
+          begin
+            MaxLookForwardRolls := 2;
+          end;
         end
         else
         begin
-          MaxLookbackFrames := 0;
+          MaxLookForwardRolls := 2;
         end;
 
 
+      // ALE 20190807 get to actually scoring
         if I < FRAMES_TOTAL then
         begin
-          if GetFramePinsDown(I) = 10  then
+          FFrames[I].score := GetFramePinsDown(I);
+          if (GetFrameStrikes(I) > 0) then
           begin
-            FScore := -1; // ALE 20190806 Strike or Spare
-            break;
+            // ALE 20190807 look forward two rolls
+            if (MaxLookForwardRolls = 2) then
+            begin
+              Inc(FFrames[I].score, FFrames[I+1].roll[1]);
+              if (FFrames[I+1].rolls > 1) then
+              begin
+                Inc(FFrames[I].score, FFrames[I+1].roll[2]);
+              end
+              else
+              begin
+                Inc(FFrames[I].score, FFrames[I+2].roll[1]);
+              end;
+            end
+            else
+            begin
+              // ALE 20190807 need to roll more before score can be calculated
+              FFrames[I].score := -1;
+              FScore := -1;
+              break;
+            end;
+          end
+          else if (GetFrameSpare(I) = True) then
+          begin
+            // ALE 20190807 look forwad one roll
+            if (MaxLookForwardRolls >= 1) then
+            begin
+              Inc(FFrames[I].score, FFrames[I+1].roll[1]);
+            end
+            else
+            begin
+              // ALE 20190807 need to roll more before score can be calculated
+              FFrames[I].score := -1;
+              FScore := -1;
+              break;
+            end;
           end;
         end
         else
@@ -290,7 +333,16 @@ begin
       end;
     end;
 
-    // ALE 20190805 10th frame crazy logic
+    // ALE 20190807 Add up the scores of each frame
+    if (FScore <> -1) then
+    begin
+      for I := 1 to FFrame do
+      begin
+        Inc(FScore, FFrames[I].score);
+      end;
+    end;
+
+    // ALE 20190805 Is the game over?  10th frame crazy logic
     if (FFrame = FRAMES_TOTAL) then
     begin
       if Rolls = 2 then
