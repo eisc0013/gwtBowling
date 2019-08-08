@@ -9,6 +9,9 @@ This is my first instance of a code Kata, the bowling game.
 There is a deviation from standard bowling scoring.  The logic returns a -1
  for the score if additional rolls are needed to determine the score.
 
+I was purposefully a little inconsistent in style, for instance leveraging
+ inline variables in one units but not others.
+
 Potential Improvements:
 1. Use a class helper to format the indeterminate/integer score.
 2. Implement a more efficient scoring algorithm.  The reverse scoring was
@@ -21,4 +24,5 @@ Potential Improvements:
     bowling.
 6. Implement a more realistic random roll, perhaps with a few different skill
     levels.
+7. Align to a style guide.
 
