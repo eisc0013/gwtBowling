@@ -50,6 +50,8 @@ type
     function GetGameOver: Boolean;
     function GetFramePinsDown: Integer; Overload;
     function GetFramePinsDown(const AFrame: Integer): Integer; Overload;
+    function GetFrameStrikes(const AFrame: Integer): Integer;
+    function GetFrameSpare(const AFrame: Integer): Boolean;
   public
     constructor Create;
     function Start: Boolean;
@@ -109,6 +111,71 @@ begin
   result := FScore;
 end;
 
+function TGame.GetFrameSpare(const AFrame: Integer): Boolean;
+var
+  Spare: Boolean;
+  I: Integer;
+begin
+  Spare := False;
+  if (AFrame < FRAMES_TOTAL) then
+  begin
+    // ALE 20190807 Pre-10th frame
+    if (GetFrameStrikes(AFrame) = 0) AND (FFrames[AFrame].roll[1] + FFrames[AFrame].roll[2] = 10) then
+    begin
+      Spare := True;
+    end;
+  end
+  else
+  begin
+    // ALE 20190807 10th frame
+    if (GetFrameStrikes(AFrame) < 2) then
+    begin
+      // ALE 20190807 a spare can only happen in 10th frame if there are zero or one strikes
+      if (FFrames[AFrame].roll[2] <> 10) then
+      begin
+        // ALE 20190807 can't have a spare if 2nd of 3 rolls is a strike
+        if (FFrames[AFrame].roll[1] <> 10) AND (FFrames[AFrame].roll[1] + FFrames[AFrame].roll[2] = 10) then
+        begin
+          Spare := True;
+        end
+        else if (FFrames[AFrame].roll[3] <> 10) AND (FFrames[AFrame].roll[2] + FFrames[AFrame].roll[3] = 10) then
+        begin
+          Spare := True;
+        end;
+      end;
+    end;
+  end;
+  result := Spare;
+end;
+
+function TGame.GetFrameStrikes(const AFrame: Integer): Integer;
+var
+  Strikes: Integer;
+  I: Integer;
+begin
+  Strikes := 0;
+  if (AFrame < FRAMES_TOTAL) then
+  begin
+    // ALE 20190807 Pre-10th frame
+    if (FFrames[AFrame].roll[1] = 10) then
+    begin
+      Strikes := 1;
+    end;
+  end
+  else
+  begin
+    // ALE 20190807 10th frame
+    for I := 1  to ROLLS_PER_FRAME_MAX do
+    begin
+      if (FFrames[AFrame].roll[I] = 10) then
+      begin
+        Inc(Strikes);
+      end;
+    end;
+  end;
+  result := Strikes;
+end;
+
 function TGame.Roll: Integer;
 begin
   result := -1;
@@ -162,10 +229,11 @@ function TGame.Roll(APinsDown: Integer): Integer;
 var
   Rolls: Integer;
   I: Integer;
+  MaxLookbackFrames: Integer;
 begin
   if NOT FGameOver then
   begin
-    Inc(FScore, APinsDown);
+    //Inc(FScore, APinsDown);
     Inc(FRolls);
     Inc(FFrames[FFrame].rolls);
     Rolls := FFrames[FFrame].rolls;
@@ -174,23 +242,50 @@ begin
 
     // ALE 20190805 calculate score, use look-back to previous frames if needed
     FScore := 0; // ALE 20190806 indeterminate score
-    for I := FFrame downto 1 do
+    if (FFrame < FRAMES_TOTAL) AND (GetFramePinsDown = 10) then
     begin
-      if FFrame < FRAMES_TOTAL then
+      FScore := -1; // ALE 20190806 Strike or Spare
+    end
+    else if (FFrame < FRAMES_TOTAL)
+     AND (FFrames[FFrame].rolls < 3)
+     AND (GetFramePinsDown >= 10) then
+    begin
+      FScore := -1; // ALE 20190806 Strike or Spare
+    end
+    else
+    begin
+      for I := FFrame downto 1 do
       begin
-        if GetFramePinsDown = 10  then
+        if I > 2 then
         begin
-          FScore := -1; // ALE 20190806 Strike or Spare
-          break;
+          MaxLookbackFrames := 2;
+        end
+        else if I > 1 then
+        begin
+          MaxLookbackFrames := 1;
+        end
+        else
+        begin
+          MaxLookbackFrames := 0;
         end;
-      end
-      else
-      begin
-        // ALE 20190806 10th frame needs some finesse
-        if (FFrames[FFrame].rolls < 3) AND (GetFramePinsDown >= 10) then
+
+
+        if I < FRAMES_TOTAL then
         begin
-          FScore := -1; // ALE 20190806 Strike or Spare
-          break;
+          if GetFramePinsDown(I) = 10  then
+          begin
+            FScore := -1; // ALE 20190806 Strike or Spare
+            break;
+          end;
+        end
+        else
+        begin
+          // ALE 20190806 10th frame needs some finesse
+          if (FFrames[FFrame].rolls < 3) AND (GetFramePinsDown >= 10) then
+          begin
+            FScore := -1; // ALE 20190806 Strike or Spare
+            break;
+          end;
         end;
       end;
     end;
