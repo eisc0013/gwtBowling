@@ -229,7 +229,13 @@ var
   Rolls: Integer;
   I: Integer;
   MaxLookForwardRolls: Integer;
+  FrameStrikes: Integer;
 begin
+  if (APinsDown > 10) then
+  begin
+    raise Exception.Create('Max of 10 pins man');
+  end;
+
   if (NOT FGameOver) AND (APinsDown <> -1) then
   begin
     //Inc(FScore, APinsDown);
@@ -277,7 +283,7 @@ begin
         end;
 
 
-      // ALE 20190807 get to actually scoring
+        // ALE 20190807 get to actually scoring
         if I < FRAMES_TOTAL then
         begin
           FFrames[I].score := GetFramePinsDown(I);
@@ -323,6 +329,76 @@ begin
         else
         begin
           // ALE 20190806 10th frame needs some finesse
+          FFrames[I].score := 0;
+          FrameStrikes := GetFrameStrikes(I);
+          if (FFrames[I].rolls = 1) then
+          begin
+            if (FrameStrikes = 0) then
+            begin
+              Inc(FFrames[I].score, APinsDown);
+            end
+            else
+            begin
+              FFrames[I].score := -1;
+              FScore := -1;
+              break;
+            end;
+          end
+          else if (FFrames[I].rolls = 2) then
+          begin
+            if (FrameStrikes = 0) then
+            begin
+              if (GetFrameSpare(I) = False) then
+              begin
+                Inc(FFrames[I].score, APinsDown);
+              end
+              else
+              begin
+                // ALE 20190908 we have a spare
+                FFrames[I].score := -1;
+                FScore := -1;
+                break;
+              end;
+            end
+            else
+            begin
+              FFrames[I].score := -1;
+              FScore := -1;
+              break;
+            end;
+          end
+          else
+          begin
+            // ALE 20190807 all three rolls in 10th frame
+            if (FrameStrikes = 3) then
+            begin
+              Inc(FFrames[I].score, 30);
+            end
+            else if (FrameStrikes = 2) then
+            begin
+              // ALE 20190807 two strikes mean first two balls were strikes
+              Inc(FFrames[I].score, 20 + APinsDown);
+            end
+            else if (FrameStrikes = 1) then
+            begin
+              // ALE 20190807 Could start with a Strike or a Spare
+              if (FFrames[I].roll[1] = 10) then
+              begin
+                // ALE 20190807 First roll was a strike
+                Inc(FFrames[I].score, 10 + FFrames[I].roll[2] + FFrames[I].roll[3]);
+              end
+              else
+              begin
+                // ALE 20190807 Third roll was a strike, First two were a spare
+                Inc(FFrames[I].score, 20);
+              end;
+            end
+            else
+            begin
+              // ALE 20190807 Frame starts with spare
+              Inc(FFrames[I].score, 10 + APinsDown)
+            end;
+          end;
           if (FFrames[FFrame].rolls < 3) AND (GetFramePinsDown >= 10) then
           begin
             FScore := -1; // ALE 20190806 Strike or Spare
@@ -370,10 +446,8 @@ begin
         Inc(FFrame);
       end;
     end;
-
-    { TODO -oUser -cShould only be able to roll as many pins as are still standing }
   end
-  else if (FGameOver = True) then
+  else if ((APinsDown <> -1) AND (FGameOver = True)) then
   begin
     raise Exception.Create('Game is already over man');
   end;

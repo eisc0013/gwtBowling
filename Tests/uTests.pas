@@ -2,7 +2,7 @@ unit uTests;
 
 interface
 uses
-  DUnitX.TestFramework, uBowling;
+  SysUtils, DUnitX.TestFramework, uBowling;
 
 type
 
@@ -35,22 +35,25 @@ type
     [TestCase('TwoFrames', '6,4,3,1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,17')]
     [TestCase('SixFrames', '6,4,3,1,10,-1,10,-1,10,-1,5,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,92')]
     [TestCase('SixFramesAlternate', '6,4,3,1,10,10,10,5,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,92')]
+    [TestCase('SevenFramesIndeterminate', '6,4,3,1,10,10,10,5,0,10,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1')]
+    [TestCase('FullGame10th2Strikes', '10,10,10,10,10,10,10,10,10,10,10,1,-1,-1,-1,-1,-1,-1,-1,-1,-1,291')]
+    [TestCase('FullGame10th1StrikeA', '10,10,10,10,10,10,10,10,10,10,1,1,-1,-1,-1,-1,-1,-1,-1,-1,-1,273')]
+    [TestCase('FullGame10th1StrikeB', '10,10,10,10,10,10,10,10,10,5,5,10,-1,-1,-1,-1,-1,-1,-1,-1,-1,275')]
+    [TestCase('FullGame10th1StrikeC', '10,10,10,10,10,10,10,10,10,10,5,5,-1,-1,-1,-1,-1,-1,-1,-1,-1,285')]
     procedure BowlingGameRollAll(const APinsDown1, APinsDown2, APinsDown3,
      APinsDown4, APinsDown5, APinsDown6, APinsDown7, APinsDown8, APinsDown9,
      APinsDown10, APinsDown11, APinsDown12, APinsDown13, APinsDown14, APinsDown15,
      APinsDown16, APinsDown17, APinsDown18, APinsDown19, APinsDown20, APinsDown21
      : Integer; const OResult: Integer);
     [Test]
+    [TestCase('TooManyPins', '20')]
+    procedure BowlingGameTooManyPins(const APinsDown: Integer);
+    [Test]
+    procedure BowlingGameTooManyRolls;
+    [Test]
+    procedure BowlingGameRandomRollException;
+    [Test]
     procedure BowlingGamePerfect;
-    // Sample Methods
-    // Simple single Test
-    [Test]
-    procedure Test1;
-    // Test with TestCase Attribute to supply parameters.
-    [Test]
-    [TestCase('TestA','1,2')]
-    [TestCase('TestB','3,4')]
-    procedure Test2(const AValue1 : Integer;const AValue2 : Integer);
   end;
 
 implementation
@@ -74,6 +77,19 @@ begin
     GameBowling.Roll(10);
   end;
   Assert.AreEqual(300, GameBowling.TotalScore);
+end;
+
+procedure TTestGame.BowlingGameRandomRollException;
+var
+  I: Integer;
+begin
+  for I := 1 to 12 do
+  begin
+    GameBowling.Roll(10);
+  end;
+  // ALE 20190807 bad things should happen on 13th roll
+  Assert.WillRaiseWithMessage(
+   procedure begin GameBowling.Roll; end, Exception, 'Roll: Bowling alley is broken');
 end;
 
 procedure TTestGame.BowlingGameRollAll(const APinsDown1, APinsDown2, APinsDown3,
@@ -132,20 +148,31 @@ begin
   Assert.AreEqual(OResult, GameBowling.TotalScore);
 end;
 
+procedure TTestGame.BowlingGameTooManyPins(const APinsDown: Integer);
+begin
+  Assert.WillRaiseWithMessage(
+   procedure begin GameBowling.Roll(APinsDown); end, Exception, 'Max of 10 pins man');
+end;
+
+procedure TTestGame.BowlingGameTooManyRolls;
+var
+  I: Integer;
+begin
+  for I := 1 to 12 do
+  begin
+    GameBowling.Roll(10);
+  end;
+  // ALE 20190807 bad things should happen on 13th roll
+  Assert.WillRaiseWithMessage(
+   procedure begin GameBowling.Roll(0); end, Exception, 'Game is already over man');
+end;
+
 procedure TTestGame.Setup;
 begin
   GameBowling := TGame.Create;
 end;
 
 procedure TTestGame.TearDown;
-begin
-end;
-
-procedure TTestGame.Test1;
-begin
-end;
-
-procedure TTestGame.Test2(const AValue1 : Integer;const AValue2 : Integer);
 begin
 end;
 
