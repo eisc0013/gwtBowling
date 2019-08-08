@@ -17,6 +17,7 @@ type
     rolls: Integer;
     score: Integer;
     roll: array [1 .. ROLLS_PER_FRAME_MAX] of Integer;
+    points: Integer;
   end;
 
   TGameOfFrames = array [1 .. FRAMES_TOTAL] of TFrame;
@@ -54,6 +55,10 @@ type
     function GetFrameSpare(const AFrame: Integer): Boolean;
     procedure IsTooManyPins(APinsDown: Integer);
     function GetLookForwardRolls(const I: Integer): Integer;
+    procedure CalculateFramesPoints(APinsDown: Integer);
+    procedure FrameIncrementer;
+    function ScoreAtFrame(const AFrame: Integer): Integer;
+    function CalculateScore: Integer;
   public
     constructor Create;
     function Start: Boolean;
@@ -65,6 +70,17 @@ type
 implementation
 
 { TGame }
+
+function TGame.CalculateScore: Integer;
+var
+  I: Integer;
+begin
+  for I := 1 to FFrame do
+  begin
+    FFrames[I].score := ScoreAtFrame(I);
+  end;
+  result := FFrames[FFrame].score;
+end;
 
 constructor TGame.Create;
 begin
@@ -229,9 +245,6 @@ end;
 function TGame.Roll(APinsDown: Integer): Integer;
 var
   Rolls: Integer;
-  I: Integer;
-  MaxLookForwardRolls: Integer;
-  FrameStrikes: Integer;
 begin
   if (NOT FGameOver) AND (APinsDown <> -1) then
   begin
@@ -243,190 +256,12 @@ begin
 
     // ALE 20190808 error out if too many pins were knocked down
     IsTooManyPins(APinsDown);
-
-    // ALE 20190805 calculate score, use look-back to previous frames if needed
-    FScore := 0; // ALE 20190806 indeterminate score
-    if (FFrame < FRAMES_TOTAL) AND (GetFramePinsDown = 10) then
-    begin
-      FScore := -1; // ALE 20190806 Strike or Spare
-    end
-    else if (FFrame = FRAMES_TOTAL)
-     AND (FFrames[FFrame].rolls < ROLLS_PER_FRAME_MAX)
-     AND (GetFramePinsDown >= 10) then
-    begin
-      FScore := -1; // ALE 20190806 Strike or Spare with one roll to go
-    end
-    else
-    begin
-      for I := FFrame downto 1 do
-      begin
-        MaxLookForwardRolls := GetLookForwardRolls(I);
-
-
-        // ALE 20190807 get to actually scoring
-        if I < FRAMES_TOTAL then
-        begin
-          FFrames[I].score := GetFramePinsDown(I);
-          if (GetFrameStrikes(I) > 0) then
-          begin
-            // ALE 20190807 look forward two rolls
-            if (MaxLookForwardRolls = 2) then
-            begin
-              Inc(FFrames[I].score, FFrames[I+1].roll[1]);
-              if (FFrames[I+1].rolls > 1) then
-              begin
-                Inc(FFrames[I].score, FFrames[I+1].roll[2]);
-              end
-              else
-              begin
-                Inc(FFrames[I].score, FFrames[I+2].roll[1]);
-              end;
-            end
-            else
-            begin
-              // ALE 20190807 need to roll more before score can be calculated
-              FFrames[I].score := -1;
-              FScore := -1;
-              break;
-            end;
-          end
-          else if (GetFrameSpare(I) = True) then
-          begin
-            // ALE 20190807 look forwad one roll
-            if (MaxLookForwardRolls >= 1) then
-            begin
-              Inc(FFrames[I].score, FFrames[I+1].roll[1]);
-            end
-            else
-            begin
-              // ALE 20190807 need to roll more before score can be calculated
-              FFrames[I].score := -1;
-              FScore := -1;
-              break;
-            end;
-          end;
-        end
-        else
-        begin
-          // ALE 20190806 10th frame needs some finesse
-          FFrames[I].score := 0;
-          FrameStrikes := GetFrameStrikes(I);
-          if (FFrames[I].rolls = 1) then
-          begin
-            if (FrameStrikes = 0) then
-            begin
-              Inc(FFrames[I].score, APinsDown);
-            end
-            else
-            begin
-              FFrames[I].score := -1;
-              FScore := -1;
-              break;
-            end;
-          end
-          else if (FFrames[I].rolls = 2) then
-          begin
-            if (FrameStrikes = 0) then
-            begin
-              if (GetFrameSpare(I) = False) then
-              begin
-                Inc(FFrames[I].score, FFrames[I].roll[1] + APinsDown);
-              end
-              else
-              begin
-                // ALE 20190908 we have a spare
-                FFrames[I].score := -1;
-                FScore := -1;
-                break;
-              end;
-            end
-            else
-            begin
-              FFrames[I].score := -1;
-              FScore := -1;
-              break;
-            end;
-          end
-          else
-          begin
-            // ALE 20190807 all three rolls in 10th frame
-            if (FrameStrikes = 3) then
-            begin
-              Inc(FFrames[I].score, 30);
-            end
-            else if (FrameStrikes = 2) then
-            begin
-              // ALE 20190807 two strikes mean first two balls were strikes
-              Inc(FFrames[I].score, 20 + APinsDown);
-            end
-            else if (FrameStrikes = 1) then
-            begin
-              // ALE 20190807 Could start with a Strike or a Spare
-              if (FFrames[I].roll[1] = 10) then
-              begin
-                // ALE 20190807 First roll was a strike
-                Inc(FFrames[I].score, 10 + FFrames[I].roll[2] + FFrames[I].roll[3]);
-              end
-              else
-              begin
-                // ALE 20190807 Third roll was a strike, First two were a spare
-                Inc(FFrames[I].score, 20);
-              end;
-            end
-            else
-            begin
-              // ALE 20190807 Frame starts with spare
-              Inc(FFrames[I].score, 10 + APinsDown)
-            end;
-          end;
-          { ALE 20190807 should be dead code
-          if (FFrames[FFrame].rolls < 3) AND (GetFramePinsDown >= 10) then
-          begin
-            FScore := -1; // ALE 20190806 Strike or Spare
-            break;
-          end; }
-        end;
-      end;
-    end;
-
-    // ALE 20190807 Add up the scores of each frame
-    if (FScore <> -1) then
-    begin
-      for I := 1 to FFrame do
-      begin
-        Inc(FScore, FFrames[I].score);
-      end;
-    end;
-
-    // ALE 20190805 Is the game over?  10th frame crazy logic
-    if (FFrame = FRAMES_TOTAL) then
-    begin
-      if Rolls = 2 then
-      begin
-        if FFrames[FFrame].roll[1] + FFrames[FFrame].roll[2] < 10 then
-        begin
-          FGameOver := True;
-        end;
-      end
-      else if Rolls = 3 then
-      begin
-        FGameOver := True;
-      end;
-    end
-    else
-    begin
-      // ALE 20190805 frame incrementing pre-10th frame
-      if ((FFrames[FFrame].roll[1] = 10) AND (FFrame < FRAMES_TOTAL)) then
-      begin
-        // ALE 20190805 got a strike, move us to next frame for all but 10th frame
-        Inc(FFrame);
-      end
-      else if ((FFrames[FFrame].rolls = 2) AND (FFrame < FRAMES_TOTAL)) then
-      begin
-        // ALE 20190805 rolled two balls, move us to next frame for all but 10th frame
-        Inc(FFrame);
-      end;
-    end;
+    // ALE 20190908 re-calculate points associated to each frame
+    CalculateFramesPoints(APinsDown);
+    FScore := CalculateScore;
+    // ALE 20190808 determine if rolls should result in moving to the next
+    //  frame and also if the game is over
+    FrameIncrementer;
   end
   else if ((APinsDown <> -1) AND (FGameOver = True)) then
   begin
@@ -438,6 +273,208 @@ end;
 function TGame.ScoreByFrame: TGameOfFrames;
 begin
   result := FFrames;
+end;
+
+function TGame.ScoreAtFrame(const AFrame: Integer): Integer;
+var
+  I: Integer;
+  ScoreThruFrame: Integer;
+begin
+  ScoreThruFrame := 0;
+  // ALE 20190807 Add up the scores of each frame
+  if (FScore <> -1) then
+  begin
+    for I := 1 to AFrame do
+    begin
+      Inc(ScoreThruFrame, FFrames[I].points);
+    end;
+    result := ScoreThruFrame;
+  end
+  else
+  begin
+    result := -1;
+  end;
+end;
+
+procedure TGame.FrameIncrementer;
+var
+  Rolls: Integer;
+begin
+  Rolls := FFrames[FFrame].rolls;
+
+  // ALE 20190805 Is the game over?  10th frame crazy logic
+  if (FFrame = FRAMES_TOTAL) then
+  begin
+    if Rolls = 2 then
+    begin
+      if FFrames[FFrame].roll[1] + FFrames[FFrame].roll[2] < 10 then
+      begin
+        FGameOver := True;
+      end;
+    end
+    else if Rolls = 3 then
+    begin
+      FGameOver := True;
+    end;
+  end
+  else
+  begin
+    // ALE 20190805 frame incrementing pre-10th frame
+    if ((FFrames[FFrame].roll[1] = 10) and (FFrame < FRAMES_TOTAL)) then
+    begin
+      // ALE 20190805 got a strike, move us to next frame for all but 10th frame
+      Inc(FFrame);
+    end
+    else if ((FFrames[FFrame].rolls = 2) and (FFrame < FRAMES_TOTAL)) then
+    begin
+      // ALE 20190805 rolled two balls, move us to next frame for all but 10th frame
+      Inc(FFrame);
+    end;
+  end;
+end;
+
+procedure TGame.CalculateFramesPoints(APinsDown: Integer);
+var
+  MaxLookForwardRolls: Integer;
+  FrameStrikes: Integer;
+  I: Integer;
+begin
+  // ALE 20190805 calculate score, use look-forward to later frames if needed
+  FScore := 0;
+  if (FFrame < FRAMES_TOTAL) and (GetFramePinsDown = 10) then
+  begin
+    FScore := -1;
+  end
+  else // ALE 20190806 Strike or Spare
+  if (FFrame = FRAMES_TOTAL) and (FFrames[FFrame].rolls < ROLLS_PER_FRAME_MAX) and (GetFramePinsDown >= 10) then
+  begin
+    FScore := -1;
+  end
+  else
+  // ALE 20190806 Strike or Spare with one roll to go
+  begin
+    for I := FFrame downto 1 do
+    begin
+      MaxLookForwardRolls := GetLookForwardRolls(I);
+      // ALE 20190807 get to actually scoring
+      if I < FRAMES_TOTAL then
+      begin
+        FFrames[I].points := GetFramePinsDown(I);
+        if (GetFrameStrikes(I) > 0) then
+        begin
+          // ALE 20190807 look forward two rolls
+          if (MaxLookForwardRolls = 2) then
+          begin
+            Inc(FFrames[I].points, FFrames[I + 1].roll[1]);
+            if (FFrames[I + 1].rolls > 1) then
+            begin
+              Inc(FFrames[I].points, FFrames[I + 1].roll[2]);
+            end
+            else
+            begin
+              Inc(FFrames[I].points, FFrames[I + 2].roll[1]);
+            end;
+          end
+          else
+          begin
+            // ALE 20190807 need to roll more before score can be calculated
+            FFrames[I].points := -1;
+            FScore := -1;
+            break;
+          end;
+        end
+        else if (GetFrameSpare(I) = True) then
+        begin
+          // ALE 20190807 look forwad one roll
+          if (MaxLookForwardRolls >= 1) then
+          begin
+            Inc(FFrames[I].points, FFrames[I + 1].roll[1]);
+          end
+          else
+          begin
+            // ALE 20190807 need to roll more before score can be calculated
+            FFrames[I].points := -1;
+            FScore := -1;
+            break;
+          end;
+        end;
+      end
+      else
+      begin
+        // ALE 20190806 10th frame needs some finesse
+        FFrames[I].points := 0;
+        FrameStrikes := GetFrameStrikes(I);
+        if (FFrames[I].rolls = 1) then
+        begin
+          if (FrameStrikes = 0) then
+          begin
+            Inc(FFrames[I].points, APinsDown);
+          end
+          else
+          begin
+            FFrames[I].points := -1;
+            FScore := -1;
+            break;
+          end;
+        end
+        else if (FFrames[I].rolls = 2) then
+        begin
+          if (FrameStrikes = 0) then
+          begin
+            if (GetFrameSpare(I) = False) then
+            begin
+              Inc(FFrames[I].points, FFrames[I].roll[1] + APinsDown);
+            end
+            else
+            begin
+              // ALE 20190908 we have a spare
+              FFrames[I].points := -1;
+              FScore := -1;
+              break;
+            end;
+          end
+          else
+          begin
+            FFrames[I].points := -1;
+            FScore := -1;
+            break;
+          end;
+        end
+        else
+        begin
+          // ALE 20190807 all three rolls in 10th frame
+          if (FrameStrikes = 3) then
+          begin
+            Inc(FFrames[I].points, 30);
+          end
+          else if (FrameStrikes = 2) then
+          begin
+            // ALE 20190807 two strikes mean first two balls were strikes
+            Inc(FFrames[I].points, 20 + APinsDown);
+          end
+          else if (FrameStrikes = 1) then
+          begin
+            // ALE 20190807 Could start with a Strike or a Spare
+            if (FFrames[I].roll[1] = 10) then
+            begin
+              // ALE 20190807 First roll was a strike
+              Inc(FFrames[I].points, 10 + FFrames[I].roll[2] + FFrames[I].roll[3]);
+            end
+            else
+            begin
+              // ALE 20190807 Third roll was a strike, First two were a spare
+              Inc(FFrames[I].points, 20);
+            end;
+          end
+          else
+          begin
+            // ALE 20190807 Frame starts with spare
+            Inc(FFrames[I].points, 10 + APinsDown);
+          end;
+        end;
+      end;
+    end;
+  end;
 end;
 
 function TGame.GetLookForwardRolls(const I: Integer): Integer;
@@ -516,6 +553,7 @@ begin
     begin
       FFrames[I].roll[J] := -1;
     end;
+    FFrames[I].points := -1;
     FFrames[I].score := -1;
   end;
 
